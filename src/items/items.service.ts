@@ -1,28 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { Item } from './interfaces/item.interface'
+import { InjectModel } from '@nestjs/mongoose';
+import {CreateItemDto} from './dto/create-item.dto'
+import { Model } from 'mongoose';
 
 @Injectable()
 export class ItemsService {
-  private readonly items: Item[] = [
-    {
-      id: '34343345',
-      name: 'Item One',
-      qty: 100,
-      description: "This is item one"
-    },
-    {
-      id: '98654587',
-      name: 'Item Two',
-      qty: 50,
-      description: "This is item two"
-    }
-  ];
+  constructor(@InjectModel('Item') private readonly itemModel: Model<Item>) { }
 
-  findAll(): Item[] {
-    return this.items
+  async findAll(): Promise<Item[]> {
+    return this.itemModel.find().exec()
   }
 
-  findOne(id: string): Item {
-    return this.items.find(item => item.id === id)
+  async findOne(id: string): Promise<Item> {
+    return this.itemModel.findOne({ _id: id })
   }
+
+  async create(item: CreateItemDto): Promise<Item> {
+    const newItem = new this.itemModel(item)
+    return await newItem.save()
+  }
+
+  async delete(id: string): Promise<Item> {
+    return await this.itemModel.findByIdAndRemove(id);
+  }
+
+  async update(id: string, item: Item): Promise<Item> {
+    return await this.itemModel.findByIdAndUpdate(id, item, { new: true });
+  }
+
 }
